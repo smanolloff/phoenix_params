@@ -412,3 +412,5 @@ They will hopefully be addressed in a future version:
 * No more than one validator per param is supported (including builtin validators).<br/>Workaround: call any extra validators inside a custom validator function. Builtin validators are called like so:<br/>`run_builtin_validation(:numericality, opts, value)`
 * Builtin validators can't be instructed to to work on individual list elements.<br/>Workaround: call builtin validators inside a custom validator function.
 * There is no `Any` type for param values of an unknown nature.<br/>Workaround: omit those in the request definition and access them in the controller via `conn.body_params` and `conn.query_params`.
+* There is no plain `List` type, for lists containing values of different type.<br/>Workaround: same as above
+* Types that are list (eg. `type: [Integer]`) allow `nil` elements.<br/>Workaround: ensure your custom validator (if any) handles those.

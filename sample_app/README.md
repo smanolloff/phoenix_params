@@ -14,13 +14,13 @@ Send a request:
 curl -H 'content-type: application/json' -X POST http://localhost:4000/api/users -d '{
   "email": "johndoe",
   "date_of_birth": "2012-01-01",
-  "programming_language": "Python",
+  "language": "Python",
   "years_of_experience": "8",
-  "hobbies": ["Gaming", null, "Music"],
+  "hobbies": ["Gaming", "Racing", "Music"],
   "address": {
     "country": "BR",
     "street_number": "xx",
-    "language": "pt-BR"
+    "locale": "pt-BR"
   }
 }'
 ```
@@ -32,9 +32,9 @@ curl -H 'content-type: application/json' -X POST http://localhost:4000/api/users
   "name": "John Doe",
   "email": "johndoe@example.com",
   "date_of_birth": "2012-01-01",
-  "programming_language": "Python",
+  "language": "Python",
   "years_of_experience": "8",
-  "hobbies": ["Gaming", null, "Music"],
+  "hobbies": ["Gaming", "Racing", "Music"],
   "address": {
     "country": "BG",
     "street_number": 12

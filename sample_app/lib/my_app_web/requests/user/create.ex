@@ -27,7 +27,7 @@ defmodule MyAppWeb.Requests.User.Create do
 
   param :hobbies,
         type: [String],
-        validation: __MODULE__.validate_hobbies/1
+        validator: &__MODULE__.validate_hobbies/1
 
   param :address,
         type: MyAppWeb.Requests.Shared.Address,
@@ -47,7 +47,7 @@ defmodule MyAppWeb.Requests.User.Create do
   def validate_hobbies(list), do: validate_each(list, &validate_hobby/1)
 
   def validate_hobby(value) do
-    String.length(hobby) > 3 || {:error, "too short"}
+    String.length(value) > 3 || {:error, "too short"}
   end
 
   def validate_age_and_exp(params) do

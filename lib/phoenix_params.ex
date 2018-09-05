@@ -128,6 +128,7 @@ defmodule PhoenixParams do
   - length - validates length of a String.
     Accepts a keyword list with :gt, :gte, :lt, :lte and/or :eq
   - size - validates the number of elements in a list
+  - regex - validates the string against a regex pattern
 
   The package is designed to be a "plug" and:
   - it changes the input map's string keys to atoms
@@ -316,7 +317,7 @@ defmodule PhoenixParams do
     end
   end
 
-  defmacro __using__(error_view) do
+  defmacro __using__(error_view: error_view) do
     quote location: :keep do
       import Plug.Conn
       import unquote(__MODULE__)
@@ -448,7 +449,7 @@ defmodule PhoenixParams do
               conn
               |> put_status(400)
               |> halt
-              |> Phoenix.Controller.render(unquote(error_view), "400.json", [{:validation_failed, errors}])
+              |> Phoenix.Controller.render(unquote(error_view), "400.json", validation_failed: errors)
 
           {:ok, params} ->
             # NOTE: It's generally better to leave the original conn.params
@@ -524,7 +525,6 @@ defmodule PhoenixParams do
       #
       # This validator is to be invoked manually in custom validators.
       # E.g.
-      # def my_validator({:error, _} = err), do: err
       # def my_validator(list) when is_list(list), do: validate_each(list, &my_validator/1)
       # def my_validator(value) do
       #   value == 5 || {:error, "is not 5"}
@@ -590,6 +590,10 @@ defmodule PhoenixParams do
         else
           message -> {:error, message}
         end
+      end
+
+      def run_builtin_validation(:regex, pattern, value) do
+        Regex.match?(pattern, value) || {:error, "invalid format"}
       end
 
       #

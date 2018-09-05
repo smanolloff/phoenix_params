@@ -22,15 +22,15 @@ defmodule MyAppWeb.Requests.Shared.Address do
   #
   # Coercers for our custom type
   #
-  def coerce_locale(l) when is_nil(l), do: v
+  def coerce_locale(l) when is_nil(l), do: l
   def coerce_locale(l) when not is_bitstring(l), do: {:error, "invalid locale"}
   def coerce_locale(l) do
     captures = Regex.run(~r/\A[a-z]{2}-[A-Z]{2}\z/, l)
 
     if captures do
       %{
-        language: captures[1],
-        country: captures[2]
+        language: Enum.at(captures, 1),
+        country: Enum.at(captures, 2)
       }
     else
       {:error, "invalid locale"}
