@@ -159,7 +159,7 @@ Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex).
 <a id="the-typedef-macro"></a>
 ### The `typedef` macro
 
-Defines a custom param type. Useful when the See [builtin types](#builtin-types) are not enough to represent the input data.
+Defines a custom param type. Useful when the [builtin types](#builtin-types) are not enough to represent the input data.
 
 Accepts two arguments: a _name_ and a _coercer_.
 
