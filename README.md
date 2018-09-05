@@ -2,6 +2,8 @@
 
 A plug for Phoenix applications for validating and transforming HTTP request params.
 
+Define a request schema, validate and transform the input before the controller is called: this allows you for a clean and assertive controller code.
+
 <!-- MarkdownTOC -->
 
 - [Example usage](#example-usage)
@@ -19,6 +21,7 @@ A plug for Phoenix applications for validating and transforming HTTP request par
   - [`in`](#in)
   - [`regex`](#regex)
 - [Errors](#errors)
+- [Known limitations](#known-limitations)
 
 <!-- /MarkdownTOC -->
 
@@ -398,4 +401,14 @@ If you don't want to perform any transformation to those results, just return th
   end
 ```
 
-Examples [here](sample_app/lib/my_app_web/views/error_vie.ex).
+Examples [here](sample_app/lib/my_app_web/views/error_view.ex).
+
+<a id="known-limitations"></a>
+## Known limitations
+
+They will hopefully be addressed in a future version:
+
+* Nested requests can't be a list. Eg. `type: [UserRequest], nested: true` will not work.<br/>Workaround: none so far :/
+* No more than one validator per param is supported (including builtin validators).<br/>Workaround: call any extra validators inside a custom validator function. Builtin validators are called like so:<br/>`run_builtin_validation(:numericality, opts, value)`
+* Builtin validators can't be instructed to to work on individual list elements.<br/>Workaround: call builtin validators inside a custom validator function.
+* There is no `Any` type for param values of an unknown nature.<br/>Workaround: omit those in the request definition and access them in the controller via `conn.body_params` and `conn.query_params`.
