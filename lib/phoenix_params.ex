@@ -195,18 +195,19 @@ defmodule PhoenixParams do
       {nested, opts} = Keyword.pop(opts, :nested)
       builtin_validators = opts
 
-      coercer = cond do
-        !typedef && (nested == true) ->
-          string_func_name = "&#{type}.validate/1"
-          {func_ref, []} = Code.eval_string(string_func_name)
-          func_ref
+      coercer =
+        cond do
+          !typedef && nested == true ->
+            string_func_name = "&#{type}.validate/1"
+            {func_ref, []} = Code.eval_string(string_func_name)
+            func_ref
 
-        !typedef ->
-          raise "Unknown type: #{inspect(type)}"
+          !typedef ->
+            raise "Unknown type: #{inspect(type)}"
 
-        true ->
-          elem(typedef, 1)
-      end
+          true ->
+            elem(typedef, 1)
+        end
 
       if Enum.any?(@paramdefs, &(elem(&1, 0) == name)) do
         raise "Duplicate parameter: #{name}"
@@ -236,11 +237,11 @@ defmodule PhoenixParams do
   defmacro __before_compile__(_env) do
     quote location: :keep do
       defstruct Enum.map(@paramdefs, fn {name, opts} ->
-        {name, opts[:default]}
-      end)
+                  {name, opts[:default]}
+                end)
 
       def global_validators do
-        @global_validators |> Enum.reverse
+        @global_validators |> Enum.reverse()
       end
 
       def param_names do
@@ -326,12 +327,12 @@ defmodule PhoenixParams do
       Module.register_attribute(__MODULE__, :typedefs, accumulate: true)
       Module.register_attribute(__MODULE__, :global_validators, accumulate: true)
 
-      typedef String, &__MODULE__.coerce_string/1
-      typedef Integer, &__MODULE__.coerce_integer/1
-      typedef Float, &__MODULE__.coerce_float/1
-      typedef Boolean, &__MODULE__.coerce_boolean/1
-      typedef Date, &__MODULE__.coerce_date/1
-      typedef DateTime, &__MODULE__.coerce_datetime/1
+      typedef(String, &__MODULE__.coerce_string/1)
+      typedef(Integer, &__MODULE__.coerce_integer/1)
+      typedef(Float, &__MODULE__.coerce_float/1)
+      typedef(Boolean, &__MODULE__.coerce_boolean/1)
+      typedef(Date, &__MODULE__.coerce_date/1)
+      typedef(DateTime, &__MODULE__.coerce_datetime/1)
 
       def init(default), do: default
 
@@ -351,7 +352,7 @@ defmodule PhoenixParams do
         Enum.reduce(param_names(), %{}, fn name, extracted ->
           pdef = paramdefs()[name]
           value = raw_params[to_string(name)]
-          value = is_nil(value) && pdef.default || value
+          value = (is_nil(value) && pdef.default) || value
           Map.put(extracted, name, value)
         end)
       end
@@ -362,7 +363,7 @@ defmodule PhoenixParams do
 
           case value do
             nil ->
-              pdef.required && %{coerced | name => {:error, "required"}} || coerced
+              (pdef.required && %{coerced | name => {:error, "required"}}) || coerced
 
             _ ->
               case pdef.coercer.(value) do
@@ -392,6 +393,7 @@ defmodule PhoenixParams do
 
             is_tuple(pdef.validator) ->
               {vname, vopts} = pdef.validator
+
               case run_builtin_validation(vname, vopts, value) do
                 {:error, reason} -> %{validated | name => {:error, reason}}
                 _ -> validated
@@ -407,15 +409,18 @@ defmodule PhoenixParams do
       end
 
       def conclude(validated_params) do
-        errors = Enum.filter(validated_params, fn param ->
-          case param do
-            {nil, _} -> true          # global validation failed
-            {_, {:error, _}} -> true  # param validation or coercion failed
-            _ -> false
-          end
-        end)
+        errors =
+          Enum.filter(validated_params, fn param ->
+            case param do
+              # global validation failed
+              {nil, _} -> true
+              # param validation or coercion failed
+              {_, {:error, _}} -> true
+              _ -> false
+            end
+          end)
 
-        Enum.any?(errors) && {:error, errors} || {:ok, validated_params}
+        (Enum.any?(errors) && {:error, errors}) || {:ok, validated_params}
       end
 
       def maybe_run_global_validations(validated_params) do
@@ -425,31 +430,35 @@ defmodule PhoenixParams do
             params
 
           {:ok, params} ->
-            errors = Enum.reduce_while(global_validators(), [], fn {validator, should_halt}, errors ->
-              case validator.(params) do
-                {:error, reason} ->
-                  errors = errors ++ [reason]
-                  should_halt && {:halt, errors} || {:cont, errors}
-                _ ->
-                  {:cont, errors}
-              end
-            end)
+            errors =
+              Enum.reduce_while(global_validators(), [], fn {validator, should_halt}, errors ->
+                case validator.(params) do
+                  {:error, reason} ->
+                    errors = errors ++ [reason]
+                    (should_halt && {:halt, errors}) || {:cont, errors}
 
-            Enum.any?(errors) && Map.put(params, nil, errors) || params
+                  _ ->
+                    {:cont, errors}
+                end
+              end)
+
+            (Enum.any?(errors) && Map.put(params, nil, errors)) || params
         end
       end
 
       def call(conn, _) do
         case validate(conn.params) do
           {:error, errors} ->
-            errors = Enum.reduce(errors, [], &(validation_error(&1, &2)))
-            errors = length(errors) > 1 && errors || List.first(errors)
+            errors = Enum.reduce(errors, [], &validation_error(&1, &2))
+            errors = (length(errors) > 1 && errors) || List.first(errors)
 
             conn =
               conn
               |> put_status(400)
               |> halt
-              |> Phoenix.Controller.render(unquote(error_view), "400.json", validation_failed: errors)
+              |> Phoenix.Controller.render(unquote(error_view), "400.json",
+                validation_failed: errors
+              )
 
           {:ok, params} ->
             # NOTE: It's generally better to leave the original conn.params
@@ -475,6 +484,7 @@ defmodule PhoenixParams do
       def coerce_integer(v) when is_nil(v), do: v
       def coerce_integer(v) when is_integer(v), do: v
       def coerce_integer(v) when not is_bitstring(v), do: {:error, "not an integer"}
+
       def coerce_integer(v) do
         case Integer.parse(v) do
           {i, ""} -> i
@@ -485,6 +495,7 @@ defmodule PhoenixParams do
       def coerce_float(v) when is_nil(v), do: v
       def coerce_float(v) when is_float(v), do: v
       def coerce_float(v) when not is_bitstring(v), do: {:error, "not a float"}
+
       def coerce_float(v) do
         case Float.parse(v) do
           {i, ""} -> i
@@ -498,6 +509,7 @@ defmodule PhoenixParams do
 
       def coerce_date(v) when is_nil(v), do: v
       def coerce_date(v) when not is_bitstring(v), do: {:error, "invalid date"}
+
       def coerce_date(v) do
         case Date.from_iso8601(v) do
           {:ok, d} -> d
@@ -507,6 +519,7 @@ defmodule PhoenixParams do
 
       def coerce_datetime(v) when is_nil(v), do: v
       def coerce_datetime(v) when not is_bitstring(v), do: {:error, "invalid datetime"}
+
       def coerce_datetime(v) do
         case DateTime.from_iso8601(v) do
           {:ok, dt, _} -> dt
@@ -554,8 +567,7 @@ defmodule PhoenixParams do
              true <- !Map.has_key?(opts, :gte) || value >= opts.gte || "must be >= #{opts.gte}",
              true <- !Map.has_key?(opts, :lt) || value < opts.lt || "must be < #{opts.lt}",
              true <- !Map.has_key?(opts, :lte) || value <= opts.lte || "must be <= #{opts.lte}",
-             true <- !Map.has_key?(opts, :eq) || value == opts.eq || "must be == #{opts.eq}"
-        do
+             true <- !Map.has_key?(opts, :eq) || value == opts.eq || "must be == #{opts.eq}" do
           true
         else
           message -> {:error, message}
@@ -567,12 +579,21 @@ defmodule PhoenixParams do
       end
 
       def run_builtin_validation(:length, opts, value) when is_bitstring(value) do
-        with true <- !Map.has_key?(opts, :gt) || String.length(value) > opts.gt || "must be more than #{opts.gt} chars",
-             true <- !Map.has_key?(opts, :gte) || String.length(value) >= opts.gte || "must be at least #{opts.gte} chars",
-             true <- !Map.has_key?(opts, :lt) || String.length(value) < opts.lt || "must be less than #{opts.lt} chars",
-             true <- !Map.has_key?(opts, :lte) || String.length(value) <= opts.lte || "must at most #{opts.lte} chars",
-             true <- !Map.has_key?(opts, :eq) || String.length(value) == opts.eq || "must be exactly #{opts.eq} chars"
-        do
+        with true <-
+               !Map.has_key?(opts, :gt) || String.length(value) > opts.gt ||
+                 "must be more than #{opts.gt} chars",
+             true <-
+               !Map.has_key?(opts, :gte) || String.length(value) >= opts.gte ||
+                 "must be at least #{opts.gte} chars",
+             true <-
+               !Map.has_key?(opts, :lt) || String.length(value) < opts.lt ||
+                 "must be less than #{opts.lt} chars",
+             true <-
+               !Map.has_key?(opts, :lte) || String.length(value) <= opts.lte ||
+                 "must at most #{opts.lte} chars",
+             true <-
+               !Map.has_key?(opts, :eq) || String.length(value) == opts.eq ||
+                 "must be exactly #{opts.eq} chars" do
           true
         else
           message -> {:error, message}
@@ -580,12 +601,21 @@ defmodule PhoenixParams do
       end
 
       def run_builtin_validation(:size, opts, value) when is_list(value) do
-        with true <- !Map.has_key?(opts, :gt) || length(value) > opts.gt || "must contain more than #{opts.gt} elements",
-             true <- !Map.has_key?(opts, :gte) || length(value) >= opts.gte || "must contain at least #{opts.gte} elements",
-             true <- !Map.has_key?(opts, :lt) || length(value) < opts.lt || "must contain less than #{opts.lt} elements",
-             true <- !Map.has_key?(opts, :lte) || length(value) <= opts.lte || "must contain at most #{opts.lte} elements",
-             true <- !Map.has_key?(opts, :eq) || length(value) == opts.eq || "must contain exactly #{opts.eq} elements"
-        do
+        with true <-
+               !Map.has_key?(opts, :gt) || length(value) > opts.gt ||
+                 "must contain more than #{opts.gt} elements",
+             true <-
+               !Map.has_key?(opts, :gte) || length(value) >= opts.gte ||
+                 "must contain at least #{opts.gte} elements",
+             true <-
+               !Map.has_key?(opts, :lt) || length(value) < opts.lt ||
+                 "must contain less than #{opts.lt} elements",
+             true <-
+               !Map.has_key?(opts, :lte) || length(value) <= opts.lte ||
+                 "must contain at most #{opts.lte} elements",
+             true <-
+               !Map.has_key?(opts, :eq) || length(value) == opts.eq ||
+                 "must contain exactly #{opts.eq} elements" do
           true
         else
           message -> {:error, message}
@@ -603,14 +633,14 @@ defmodule PhoenixParams do
       # Global validation errors are stored under a nil key and are a list
       # of messages
       defp validation_error({nil, list}, errors) when is_list(list) do
-        Enum.reduce(list, errors, &(validation_error({nil, &1}, &2)))
+        Enum.reduce(list, errors, &validation_error({nil, &1}, &2))
       end
 
       # Nested validation errors are stored under a param key and are a
       # (keyword) list of {name, {:error, msg}} (or {nil, list} like above)
       defp validation_error({name, {:error, list}}, errors) when is_list(list) do
         Enum.reduce(list, errors, fn {k, v}, acc ->
-          nested_name = k && "#{name}.#{k}" || name
+          nested_name = (k && "#{name}.#{k}") || name
           validation_error({nested_name, v}, acc)
         end)
       end
@@ -630,7 +660,7 @@ defmodule PhoenixParams do
       end
 
       defp validation_error(name, message) do
-        code = (message == "required") && "MISSING" || "INVALID"
+        code = (message == "required" && "MISSING") || "INVALID"
         %{error_code: code, param: name, message: "Validation error: #{message}"}
       end
 
