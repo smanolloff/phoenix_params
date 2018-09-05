@@ -15,7 +15,7 @@ defmodule MyAppWeb.Requests.User.Create do
         required: true,
         validator: &__MODULE__.validate_dob/1
 
-  param :programming_language,
+  param :language,
         type: String,
         required: true,
         in: ["Elixir", "Ruby", "Python", "Java", "Other"]

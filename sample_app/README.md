@@ -140,7 +140,7 @@ defmodule MyAppWeb.Requests.Shared.Address do
 end
 ```
 
-* Instruct Phoenix to actually use it in [`lib/my_app_web/controllers/user_controller.ex`](lib/my_app_web/controllers/user_controller.ex):
+* Instruct Phoenix to actually use it in [`lib/my_app_web/controllers/user_controller.ex`](lib/my_app_web/controllers/user_controller.ex#L4):
 
 ```elixir
 defmodule MyAppWeb.UserController do

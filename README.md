@@ -2,7 +2,29 @@
 
 A plug for Phoenix applications for validating and transforming HTTP request params.
 
-## Example usage:
+<!-- MarkdownTOC -->
+
+- [Example usage](#example-usage)
+- [Macros](#macros)
+  - [The `param` macro](#the-param-macro)
+  - [The `global_validator` macro](#the-global_validator-macro)
+  - [The `typedef` macro](#the-typedef-macro)
+- [Builtin types](#builtin-types)
+- [Custom validators](#custom-validators)
+- [Nested types](#nested-types)
+- [Builtin validators](#builtin-validators)
+  - [`numericality`](#numericality)
+  - [`length`](#length)
+  - [`size`](#size)
+  - [`in`](#in)
+  - [`regex`](#regex)
+- [Errors](#errors)
+
+<!-- /MarkdownTOC -->
+
+
+<a id="example-usage"></a>
+## Example usage
 
 Detailed examples can be found in the [sample app](sample_app).
 
@@ -30,7 +52,7 @@ Detailed examples can be found in the [sample app](sample_app).
 end
 ```
 
-* Set up the [controller](sample_app/lib/my_app_web/controllers/user_controller.ex):
+* Set up the [controller](sample_app/lib/my_app_web/controllers/user_controller.ex#L4):
 
 ```elixir
   # ...
@@ -45,7 +67,7 @@ end
 end
 ```
 
-* Set up the [error view](sample_app/lib/my_app_web/viewa/error_view.ex):
+* Set up the [error view](sample_app/lib/my_app_web/views/error_view.ex#L8-L10):
 
 ```elixir
   # ...
@@ -69,10 +91,12 @@ end
   # ...
 ```
 
+<a id="macros"></a>
 ## Macros
 
-Defining the request is made by making use of the macros provided by `PhoenixParams`.
+Request can be defined via the macros provided by `PhoenixParams`.
 
+<a id="the-param-macro"></a>
 ### The `param` macro
 
 Defines an input parameter to be coerced/validated.
@@ -81,15 +105,18 @@ Accepts two arguments: _name_ and _options_
 
 Allowed options:
 
-* `type` - atom; mandatory. Example: `type: Integer`. See [Builtin types](#builtin-types)
-* `required` - boolean; optional. Defaults to `false`. When `true`, a validation error is returned whenever the param is missing or its value is `nil`.
-* `nested` - boolean; optional. Defaults to `false`. When `true`, the `type` option must specify a nested request.
-* `validator` - remote function in the format `&Mod.fun/arity`; optional. Will be called with one argument - the param value - when (if) all params are successfully coerced. The function's return value is ignored, unless it's a `{:error, reason}`, which signals a validation failure.
-* `regex` - regex pattern; optional. A [builtin validator](#builtin-validators)
-* `length` - map; optional. A [builtin validator](#builtin-validators)
-* `size` - map; optional. A [builtin validator](#builtin-validators)
-* `in` - list; optional. A [builtin validator](#builtin-validators)
-* `numericality` - map; optional. A [builtin validator](#builtin-validators)
+| option        | type     | description |
+|:--------------|:---------|:------------|
+|`type`         | atom     | mandatory. Example: `type: Integer`. See [Builtin types](#builtin-types) |
+|`required`     | boolean  | optional. Defaults to `false`. When `true`, a validation error is returned whenever the param is missing or its value is `nil`. |
+|`nested`       | boolean  | optional. Defaults to `false`. Denotes the param's type is a [nested request](#nested-types). |
+|`validator`    | function | optional. A [custom validator](#custom-validators) in the format `&Mod.fun/arity`. |
+|`regex`        | regex    | optional. A [builtin validator](#regex) |
+|`length`       | map      | optional. A [builtin validator](#length) |
+|`size`         | map      | optional. A [builtin validator](#size) |
+|`in`           | list     | optional. A [builtin validator](#in) |
+|`numericality` | map      | optional. A [builtin validator](#numericality) |
+
 
 Example:
 
@@ -102,6 +129,7 @@ param :email,
 Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex)
 
 
+<a id="the-global_validator-macro"></a>
 ### The `global_validator` macro
 
 Defines a global validation to be applied.
@@ -125,6 +153,7 @@ end
 Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex).
 
 
+<a id="the-typedef-macro"></a>
 ### The `typedef` macro
 
 Defines a custom param type. Useful when the See [builtin types](#builtin-types) are not enough to represent the input data.
@@ -133,7 +162,7 @@ Accepts two arguments: a _name_ and a _coercer_.
 
 The function will _always_ be called, even if the param is missing (value would be `nil` in this case).
 
-The return value is used to replace the original one, unless it's a `{:error, reason}`, which signals a coercion failure.
+The return value will replace the original one, unless it's a `{:error, reason}`, which signals a coercion failure.
 
 Example:
 
@@ -148,6 +177,7 @@ end
 Detailed examples [here](sample_app/lib/my_app_web/requests/shared/address.ex).
 
 
+<a id="builtin-types"></a>
 ## Builtin types
 
 * `String`
@@ -162,48 +192,172 @@ Types can be wrapped in `[]`, indicating the value is a list. Example:
 * `[Integer]`
 * ...
 
-To apply a validation to each element in the list, one must manually call the `validate_each/2` function, with the _list_ and a _function_ (in the format `&Mod.fun/arity`)
+<a id="custom-validators"></a>
+## Custom validators
 
-Errors reported by `validate_each` will prepend the element index at which the validation error occured, e.g. if the returned value for the first element was `"must be positive"`, the final error message will be `"element at index 0: must be positive"`
+Functions which will be called with one argument - the param value - when (if) all params are successfully coerced.
+
+The function's return value is ignored, unless it matches `{:error, reason}`, which signals a validation failure. 
+
+Example:
+
+```elixir
+param :date_of_birth,
+      type: Date,
+      required: true,
+      validator: &__MODULE__.validate_dob/1
+
+def validate_dob(date) do
+  date < Date.utc_today || {:error, "can't be in the future"}
+end
+```
+
+If the type is a list, in order to validate each element, manually call the `validate_each/2` function inside your custom validator. This function expects the _list_ and a _function_ (in the format `&Mod.fun/arity`) which will validate separate elements.
+
+Example:
+
+```elixir
+
+param :hobbies,
+      type: [String],
+      validation: __MODULE__.validate_hobbies/1
 
 
+def validate_hobbies(list), do: validate_each(list, &validate_hobby/1)
+def validate_hobby(value), do: String.length(hobby) > 3 || {:error, "too short"}
+```
+
+Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex#L47-L51).
+
+
+<a id="nested-types"></a>
+## Nested types
+
+Consider the following JSON request:
+
+```json
+{
+  "name": "Hans Zimmer",
+  "age": 31,
+  "address": {
+    "country": "Germany",
+    "city": "Frankfurt AM",
+    "street_no": 26
+  }
+}
+```
+
+The `address` param is a whole new structure which can be expressed via a nested request definition.
+
+Example:
+
+```elixir
+defmodule UserRequest do
+  # ...
+  param :name, type: String
+  param :age, type: Integer
+  param :address, type: AddressRequest, nested: true
+end
+
+defmodule AddressRequest do
+  # ...
+  param :country, type: String
+  param :city, type: String
+  param :street_no, type: Integer
+end
+```
+
+Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex#L33-L34) and [here](sample_app/lib/my_app_web/requests/shared/address.ex)
+
+<a id="builtin-validators"></a>
 ## Builtin validators
 
+Validators for some common use-cases are provided OOTB. Note that, in case the value is a list, those validators are applied to the entire list (not its elements).
+
+<a id="numericality"></a>
 ### `numericality`
 
-Validates numbers. Accepts a keyword list with the following keys:
+Validates numbers. Accepts the following options:
 
-|key   |value type|meaning|
-|:-----|:---------|:------|
-|`:gt` |integer   |min valid value (non-inclusive)|
-|`:gte`|integer   |min valid value (inclusive)|
-|`:lt` |integer   |max valid value (non-inclusive)|
-|`:lte`|integer   |max valid value (inclusive)|
-|`:eq` |integer   |exact valid value|
+| key   | value type | meaning |
+|:------|:-----------|:--------|
+|`:gt`  | integer    |min valid value (non-inclusive)|
+|`:gte` | integer    |min valid value (inclusive)|
+|`:lt`  | integer    |max valid value (non-inclusive)|
+|`:lte` | integer    |max valid value (inclusive)|
+|`:eq`  | integer    |exact valid value|
 
-Examples [here](sample_app/lib/my_app_web/requests/user/create.ex).
 
+Example:
+
+```elixir
+param :age,
+      type: Integer,
+      length: %{gte: 18}
+```
+
+Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex#L26).
+
+<a id="length"></a>
 ### `length`
 
-Validates string lengths. Accepts the same keyword list as the `numericality` validator.
+Validates string lengths. Same options as the [`numericality`](#numericality) validator.
 
+Example:
+
+```elixir
+param :email,
+      type: String,
+      length: %{gt: 5, lt: 100}
+```
+
+Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex#L7).
+
+<a id="size"></a>
 ### `size`
 
-Validates list sizes. Accepts the same keyword list as the `numericality` validator.
+Validates list size (ie. the number of elements). Same options as the [`numericality`](#numericality) validator.
 
+Example:
+
+```elixir
+param :hobbies,
+      type: [String],
+      size: %{eq: 5}
+```
+
+<a id="in"></a>
 ### `in`
 
 Validates against a list of valid values. Accepts a list with the allowed values.
 
-Examples [here](sample_app/lib/my_app_web/requests/user/create.ex).
+Example:
 
+```elixir
+param :language,
+      type: String,
+      in: ["Elixir", "Ruby", "Python", "Java", "Other"]
+```
+
+Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex#L21).
+
+<a id="regex"></a>
 ### `regex`
 
 Validates against a regular expression. Accepts a pattern.
 
-Examples [here](sample_app/lib/my_app_web/requests/user/create.ex).
+Example:
+
+```elixir
+param :email,
+      type: String,
+      regex: ~r/[a-z_.]+@[a-z_.]+/
+```
+
+Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex#L11).
 
 
+<a id="errors"></a>
 ## Errors
 
 Each error is represented by a map and passed to the error view as a `validation_failed` assign.
@@ -230,6 +384,11 @@ Each error is a map with the following keys:
 * `param` - _optional_. It is omitted if the error is due to a _global validation_ (which usually is used to validate a combination of several params)
 * `message` - always present
 * `error_code` - always present. Either `"INVALID"` or `"MISSING"`
+
+
+If the error occurred within a list's element (as reported by `validate_each/2`) the `message` value will be "element at index &lt;i&gt;: &lt;error&gt;". Example: `"element at index 0: invalid format"`
+
+If the error occurred within a [nested param](#nested-types), the `param` value will be "&lt;parent_param&gt;.&lt;nested_param&gt;". Example: `"address.street_number: not an integer"`
 
 If you don't want to perform any transformation to those results, just return them as-is in your error view:
 
