@@ -2,7 +2,7 @@
 
 A plug for Phoenix applications for validating and transforming HTTP request params.
 
-Define a request schema, validate and transform the input before the controller is called: this allows you for a clean and assertive controller code.
+Define a request schema, validate and transform the input before the controller is called: this allows you to write clean and assertive controller code.
 
 <!-- MarkdownTOC -->
 
