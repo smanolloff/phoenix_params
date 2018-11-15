@@ -113,6 +113,7 @@ Allowed options:
 |`type`         | atom     | mandatory. Example: `type: Integer`. See [Builtin types](#builtin-types) |
 |`required`     | boolean  | optional. Defaults to `false`. When `true`, a validation error is returned whenever the param is missing or its value is `nil`. |
 |`nested`       | boolean  | optional. Defaults to `false`. Denotes the param's type is a [nested request](#nested-types). |
+|`source`       | atom     | optional. Possible values `:path`, `:query`, `:body`.
 |`validator`    | function | optional. A [custom validator](#custom-validators) in the format `&Mod.fun/arity`. |
 |`regex`        | regex    | optional. A [builtin validator](#regex) |
 |`length`       | map      | optional. A [builtin validator](#length) |
@@ -126,6 +127,7 @@ Example:
 ```elixir
 param :email,
       type: String,
+      source: :body,
       regex: ~r/[a-z_.]+@[a-z_.]+/
 ```
 

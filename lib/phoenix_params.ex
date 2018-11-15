@@ -193,6 +193,7 @@ defmodule PhoenixParams do
       {required, opts} = Keyword.pop(opts, :required)
       {default, opts} = Keyword.pop(opts, :default)
       {nested, opts} = Keyword.pop(opts, :nested)
+      {source, opts} = Keyword.pop(opts, :source)
       builtin_validators = opts
 
       coercer =
@@ -223,6 +224,7 @@ defmodule PhoenixParams do
 
       param_opts = %{
         type: type,
+        source: source,
         coercer: coercer,
         validator: validator || List.first(builtin_validators),
         required: required,
