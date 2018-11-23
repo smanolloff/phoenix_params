@@ -184,7 +184,7 @@ defmodule PhoenixParams do
   TODO: add support for arrays of nested type params.
   """
 
-  defmacro param(name, opts) when is_atom(name) or (is_list(name) and length(name) == 1) do
+  defmacro param(name, opts) when is_binary(name) or is_atom(name) or (is_list(name) and length(name) == 1) do
     quote location: :keep, bind_quoted: [name: name, opts: opts] do
       {type, opts} = Keyword.pop(opts, :type)
       typedef = Enum.find(@typedefs, &(elem(&1, 0) == type))
@@ -210,7 +210,7 @@ defmodule PhoenixParams do
             elem(typedef, 1)
         end
 
-      if Enum.any?(@paramdefs, &(elem(&1, 0) == name)) do
+      if Enum.any?(@paramdefs, &(to_string(elem(&1, 0)) == to_string(name))) do
         raise "Duplicate parameter: #{name}"
       end
 
@@ -238,10 +238,6 @@ defmodule PhoenixParams do
 
   defmacro __before_compile__(_env) do
     quote location: :keep do
-      defstruct Enum.map(@paramdefs, fn {name, opts} ->
-                  {name, opts[:default]}
-                end)
-
       def global_validators do
         @global_validators |> Enum.reverse()
       end
