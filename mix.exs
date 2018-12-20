@@ -4,7 +4,7 @@ defmodule PhoenixParams.MixProject do
   def project do
     [
       app: :phoenix_params,
-      version: "0.2.0",
+      version: "0.2.1",
       elixir: ">= 1.6.0",
       start_permanent: Mix.env() == :prod,
       description: description(),
