@@ -20,7 +20,7 @@ defmodule PhoenixParams.MixProject do
 
   defp deps do
     [
-      {:phoenix, "~> 1.3.3"},
+      {:phoenix, ">= 1.3.3"},
       {:ex_doc, ">= 0.0.0", only: :dev}
     ]
   end
