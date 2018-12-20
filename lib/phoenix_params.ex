@@ -454,9 +454,8 @@ defmodule PhoenixParams do
               conn
               |> put_status(400)
               |> halt
-              |> Phoenix.Controller.render(unquote(error_view), "400.json",
-                validation_failed: errors
-              )
+              |> Phoenix.Controller.put_view(unquote(error_view))
+              |> Phoenix.Controller.render("400.json", validation_failed: errors)
 
           {:ok, params} ->
             # NOTE: It's generally better to leave the original conn.params
