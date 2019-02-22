@@ -236,7 +236,6 @@ defmodule PhoenixParams do
         validator: validator || List.first(builtin_validators),
         required: required,
         nested: nested,
-        nested_array: nested_array,
         default: default
       }
 
