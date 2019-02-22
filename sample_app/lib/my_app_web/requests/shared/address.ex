@@ -25,7 +25,7 @@ defmodule MyAppWeb.Requests.Shared.Address do
   def coerce_locale(l) when is_nil(l), do: l
   def coerce_locale(l) when not is_bitstring(l), do: {:error, "invalid locale"}
   def coerce_locale(l) do
-    captures = Regex.run(~r/\A[a-z]{2}-[A-Z]{2}\z/, l)
+    captures = Regex.run(~r/\A([a-z]{2})-([A-Z]{2})\z/, l)
 
     if captures do
       %{
