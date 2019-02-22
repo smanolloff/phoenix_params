@@ -163,3 +163,15 @@ defmodule MyAppWeb.UserController do
   # ...
 end
 ```
+
+* Add view definition for rendering the errors in [`lib/my_app_web/views/error_view.ex`](lib/my_app_web/views/error_view.ex#L8):
+
+```elixir
+defmodule MyAppWeb.ErrorView do
+  # ...
+
+  def render("400.json", %{conn: %Plug.Conn{assigns: %{validation_failed: errors}}}) do
+    errors
+  end
+end
+```
