@@ -4,6 +4,12 @@ A plug for Phoenix applications for validating and transforming HTTP request par
 
 Define a request schema, validate and transform the input before the controller is called: this allows you to write clean and assertive controller code.
 
+## Sample app
+
+A simple phoenix application that illustrates basic usage via example can be found [here](sample_app).
+
+## Table of contents
+
 <!-- MarkdownTOC -->
 
 - [Example usage](#example-usage)
@@ -12,6 +18,7 @@ Define a request schema, validate and transform the input before the controller 
   - [The `global_validator` macro](#the-global_validator-macro)
   - [The `typedef` macro](#the-typedef-macro)
 - [Builtin types](#builtin-types)
+- [Custom types](#custom-types)
 - [Custom validators](#custom-validators)
 - [Nested types](#nested-types)
 - [Builtin validators](#builtin-validators)
@@ -161,7 +168,31 @@ Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex).
 <a id="the-typedef-macro"></a>
 ### The `typedef` macro
 
-Defines a custom param type. Useful when the [builtin types](#builtin-types) are not enough to represent the input data.
+Defines a custom param type, see [custom types](#custom-types).
+
+
+<a id="builtin-types"></a>
+## Builtin types
+
+* `String`
+* `Integer`
+* `Float`
+* `Boolean`
+* `Date` - expects a ISO8601 date and coerces it to a Date struct.
+* `DateTime` - expects a ISO8601 date with time and coerces it to a DateTime struct.
+
+Types can be wrapped in `[]`, indicating the value is a list. Example:
+* `[String]`
+* `[Integer]`
+* ...
+
+
+<a id="custom-types"></a>
+## Custom types
+
+Defined via the `typedef` macro.
+
+Useful when the [builtin types](#builtin-types) are not enough to represent the input data.
 
 Accepts two arguments: a _name_ and a _coercer_.
 
@@ -180,22 +211,6 @@ end
 ```
 
 Detailed examples [here](sample_app/lib/my_app_web/requests/shared/address.ex).
-
-
-<a id="builtin-types"></a>
-## Builtin types
-
-* `String`
-* `Integer`
-* `Float`
-* `Boolean`
-* `Date` - expects a ISO8601 date and coerces it to a Date struct.
-* `DateTime` - expects a ISO8601 date with time and coerces it to a DateTime struct.
-
-Types can be wrapped in `[]`, indicating the value is a list. Example:
-* `[String]`
-* `[Integer]`
-* ...
 
 <a id="custom-validators"></a>
 ## Custom validators
