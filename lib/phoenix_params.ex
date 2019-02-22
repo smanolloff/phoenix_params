@@ -181,13 +181,11 @@ defmodule PhoenixParams do
   The single argument expected by the `__using__` macro is the error view
   module (usually `YourAppNameWeb.ErrorView`)
 
-  TODO: add support for arrays of nested type params.
   """
 
   defmacro param(name, opts) when is_binary(name) or is_atom(name) or (is_list(name) and length(name) == 1) do
     quote location: :keep, bind_quoted: [name: name, opts: opts] do
       {type, opts} = Keyword.pop(opts, :type)
-      typedef = Enum.find(@typedefs, &(elem(&1, 0) == type))
 
       {validator, opts} = Keyword.pop(opts, :validator)
       {required, opts} = Keyword.pop(opts, :required)
@@ -196,10 +194,19 @@ defmodule PhoenixParams do
       {source, opts} = Keyword.pop(opts, :source)
       builtin_validators = opts
 
+
+      typedef = Enum.find(@typedefs, &(elem(&1, 0) == type))
+      {nested_array, typedef} =
+        if !typedef && is_list(type) && nested do
+          {true, Enum.find(@typedefs, &(elem(&1, 0) == List.first(type)))}
+        else
+          {false, typedef}
+        end
+
       coercer =
         cond do
           !typedef && nested == true ->
-            string_func_name = "&#{type}.validate/1"
+            string_func_name = nested_array && "&#{List.first(type)}.validate_array/1" || "&#{type}.validate/1"
             {func_ref, []} = Code.eval_string(string_func_name)
             func_ref
 
@@ -229,6 +236,7 @@ defmodule PhoenixParams do
         validator: validator || List.first(builtin_validators),
         required: required,
         nested: nested,
+        nested_array: nested_array,
         default: default
       }
 
@@ -344,6 +352,27 @@ defmodule PhoenixParams do
         |> conclude
         |> maybe_run_global_validations
         |> conclude
+      end
+
+      def validate_array(list) when not is_list(list), do: {:error, "invalid"}
+
+      def validate_array(list) do
+        {errors, validated} =
+          list
+          |> Enum.with_index
+          |> Enum.reduce({[], []}, fn {params, i}, {bad, good} ->
+              case validate(params) do
+                {:error, errors} ->
+                  Enum.reduce(errors, bad, fn {k, v}, bad ->
+                    {[{"[#{i}].#{k}", v} | bad], good}
+                  end)
+
+                {:ok, res} ->
+                  {bad, [res | good]}
+              end
+            end)
+
+        Enum.any?(errors) && {:error, errors} || {:ok, validated}
       end
 
       def extract(raw_params) do

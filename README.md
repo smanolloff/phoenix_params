@@ -395,6 +395,8 @@ If the error occurred within a list's element (as reported by `validate_each/2`)
 
 If the error occurred within a [nested param](#nested-types), the `param` value will be "&lt;parent_param&gt;.&lt;nested_param&gt;". Example: `"address.street_number: not an integer"`
 
+If the error occurred within a list's element, which is also a [nested param](#nested-types), the `param` value will be "&lt;parent_param&gt;.[&lt;i&gt;].&lt;nested_param&gt;". Example: `"address.[0].street_number: not an integer"`
+
 If you don't want to perform any transformation to those results, just return them as-is in your error view:
 
 ```elixir
@@ -410,7 +412,6 @@ Examples [here](sample_app/lib/my_app_web/views/error_view.ex).
 
 They will hopefully be addressed in a future version:
 
-* Nested requests can't be a list. Eg. `type: [UserRequest], nested: true` will not work.<br/>Workaround: none so far :/
 * No more than one validator per param is supported (including builtin validators).<br/>Workaround: call any extra validators inside a custom validator function. Builtin validators are called like so:<br/>`run_builtin_validation(:numericality, opts, value)`
 * Builtin validators can't be instructed to to work on individual list elements.<br/>Workaround: call builtin validators inside a custom validator function.
 * There is no `Any` type for param values of an unknown nature.<br/>Workaround: omit those in the request definition and access them in the controller via `conn.body_params` and `conn.query_params`.
