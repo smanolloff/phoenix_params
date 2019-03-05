@@ -62,7 +62,7 @@ This is because they are called only if all individual param validations pass.
 
   param :programming_language,
         type: String,
-        required: true,
+        default: "Elixir",
         in: ["Elixir", "Ruby", "Python", "Java", "Other"]
 
   param :years_of_experience,

@@ -17,7 +17,7 @@ defmodule MyAppWeb.Requests.User.Create do
 
   param :language,
         type: String,
-        required: true,
+        default: "Elixir",
         in: ["Elixir", "Ruby", "Python", "Java", "Other"]
 
   param :years_of_experience,
