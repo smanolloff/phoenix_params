@@ -240,7 +240,7 @@ Example:
 
 param :hobbies,
       type: [String],
-      validation: __MODULE__.validate_hobbies/1
+      validation: &__MODULE__.validate_hobbies/1
 
 
 def validate_hobbies(list), do: validate_each(list, &validate_hobby/1)
@@ -428,7 +428,7 @@ Examples [here](sample_app/lib/my_app_web/views/error_view.ex).
 They will hopefully be addressed in a future version:
 
 * No more than one validator per param is supported (including builtin validators).<br/>Workaround: call any extra validators inside a custom validator function. Builtin validators are called like so:<br/>`run_builtin_validation(:numericality, opts, value)`
-* Builtin validators can't be instructed to to work on individual list elements.<br/>Workaround: call builtin validators inside a custom validator function.
+* Builtin validators can't be instructed to to work on individual list elements.<br/>Workaround: call builtin validators inside a custom validator function (see above note).
 * There is no `Any` type for param values of an unknown nature.<br/>Workaround: omit those in the request definition and access them in the controller via `conn.body_params` and `conn.query_params`.
 * There is no plain `List` type, for lists containing non-homegenic values (of different types).<br/>Workaround: same as above
 * Types that are list (eg. `type: [Integer]`) allow `nil` elements.<br/>Workaround: ensure your custom validator (if any) handles those.

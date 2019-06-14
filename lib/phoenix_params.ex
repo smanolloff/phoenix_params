@@ -75,6 +75,7 @@ defmodule PhoenixParams do
   Supported types are:
     * `String`
     * `Integer`
+    * `Decimal`
     * `Float`
     * `Boolean`
     * `Date`
@@ -335,6 +336,7 @@ defmodule PhoenixParams do
       typedef(String, &__MODULE__.coerce_string/1)
       typedef(Integer, &__MODULE__.coerce_integer/1)
       typedef(Float, &__MODULE__.coerce_float/1)
+      typedef(Decimal, &__MODULE__.coerce_decimal/1)
       typedef(Boolean, &__MODULE__.coerce_boolean/1)
       typedef(Date, &__MODULE__.coerce_date/1)
       typedef(DateTime, &__MODULE__.coerce_datetime/1)
@@ -528,6 +530,17 @@ defmodule PhoenixParams do
         end
       end
 
+      def coerce_decimal(v) when is_nil(v), do: v
+      def coerce_decimal(v) when is_float(v), do: Decimal.from_float(v)
+      def coerce_decimal(v) when not is_bitstring(v), do: {:error, "not a float"}
+
+      def coerce_decimal(v) do
+        case Decimal.parse(v) do
+          {:ok, i} -> i
+          _ -> {:error, "not a decimal"}
+        end
+      end
+
       def coerce_string(v) when is_nil(v), do: v
       def coerce_string(v) when not is_bitstring(v), do: {:error, "not a string"}
       def coerce_string(v), do: v
@@ -586,6 +599,18 @@ defmodule PhoenixParams do
       #
       # Builtin validations
       #
+
+      def run_builtin_validation(:numericality, opts, %Decimal{} = value) do
+        with true <- !Map.has_key?(opts, :gt) || Decimal.compare(value, opts.gt) === Decimal.new(1) || "must be > #{opts.gt}",
+             true <- !Map.has_key?(opts, :gte) || Decimal.compare(value, opts.gt) !== Decimal.new(-1) || "must be >= #{opts.gt}",
+             true <- !Map.has_key?(opts, :lt) || Decimal.compare(value, opts.gt) === Decimal.new(-1) || "must be < #{opts.lt}",
+             true <- !Map.has_key?(opts, :lte) || Decimal.compare(value, opts.gt) !== Decimal.new(1) || "must be <= #{opts.lte}",
+             true <- !Map.has_key?(opts, :eq) || Decimal.compare(value, opts.gt) !== Decimal.new(0) || "must be == #{opts.eq}" do
+          true
+        else
+          message -> {:error, message}
+        end
+      end
 
       def run_builtin_validation(:numericality, opts, value) do
         with true <- !Map.has_key?(opts, :gt) || value > opts.gt || "must be > #{opts.gt}",
