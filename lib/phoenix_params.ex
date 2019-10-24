@@ -709,6 +709,10 @@ defmodule PhoenixParams do
         %{error_code: "INVALID", message: "Validation error: #{message}"}
       end
 
+      defp validation_error(name, message) when is_list(message) do
+        validation_error(name, Enum.join(message, "; "))
+      end
+
       defp validation_error(name, message) do
         code = (message == "required" && "MISSING") || "INVALID"
         %{error_code: code, param: name, message: "Validation error: #{message}"}

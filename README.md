@@ -111,6 +111,17 @@ Request can be defined via the macros provided by `PhoenixParams`.
 
 Defines an input parameter to be coerced/validated.
 
+Example:
+
+```elixir
+param :email,
+      type: String,
+      source: :body,
+      regex: ~r/[a-z_.]+@[a-z_.]+/
+```
+
+Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex)
+
 Accepts two arguments: _name_ and _options_ 
 
 Allowed options:
@@ -129,28 +140,11 @@ Allowed options:
 |`numericality` | map      | optional. A [builtin validator](#numericality) |
 
 
-Example:
-
-```elixir
-param :email,
-      type: String,
-      source: :body,
-      regex: ~r/[a-z_.]+@[a-z_.]+/
-```
-
-Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex)
-
 
 <a id="the-global_validator-macro"></a>
 ### The `global_validator` macro
 
 Defines a global validation to be applied.
-
-Accepts one argument: a remote function in the format `&Mod.fun/arity`, which will be called with one argument - the coerced `params` (map).
-
-The function will _not_ be called unless all individual coercions and validations on the params have passed.
-
-The return value is ignored, unless it's a `{:error, reason}`, which signals a validation failure.
 
 Example:
 
@@ -163,6 +157,12 @@ end
 ```
 
 Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex).
+
+Accepts one argument: a remote function in the format `&Mod.fun/arity`, which will be called with one argument - the coerced `params` (map).
+
+The function will _not_ be called unless all individual coercions and validations on the params have passed.
+
+The return value is ignored, unless it's a `{:error, reason}`, which signals a validation failure.
 
 
 <a id="the-typedef-macro"></a>
@@ -194,12 +194,6 @@ Defined via the `typedef` macro.
 
 Useful when the [builtin types](#builtin-types) are not enough to represent the input data.
 
-Accepts two arguments: a _name_ and a _coercer_.
-
-The function will _always_ be called, even if the param is missing (value would be `nil` in this case).
-
-The return value will replace the original one, unless it's a `{:error, reason}`, which signals a coercion failure.
-
 Example:
 
 ```elixir
@@ -211,6 +205,12 @@ end
 ```
 
 Detailed examples [here](sample_app/lib/my_app_web/requests/shared/address.ex).
+
+Accepts two arguments: a _name_ and a _coercer_.
+
+The function will _always_ be called, even if the param is missing (value would be `nil` in this case).
+
+The return value will replace the original one, unless it's a `{:error, reason}`, which signals a coercion failure.
 
 <a id="custom-validators"></a>
 ## Custom validators
