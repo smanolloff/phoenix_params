@@ -313,7 +313,7 @@ Example:
 ```elixir
 param :age,
       type: Integer,
-      length: %{gte: 18}
+      numericality: %{gte: 18}
 ```
 
 Detailed examples [here](sample_app/lib/my_app_web/requests/user/create.ex#L26).
