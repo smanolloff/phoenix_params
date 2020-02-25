@@ -132,7 +132,8 @@ defmodule PhoenixParams do
   - regex - validates the string against a regex pattern
 
   The package is designed to be a "plug" and:
-  - it changes the input map's string keys to atoms
+  - it changes the input map's string keys to atoms whenever the
+    param names are defined as atoms
   - it discards undefined params
   - it changes (coerces) the values to whatever type they correspond to
     This means that a definition like `param :age, type: Integer` will
@@ -324,7 +325,7 @@ defmodule PhoenixParams do
     end
   end
 
-  defmacro __using__(error_view: error_view) do
+  defmacro __using__(opts) do
     quote location: :keep do
       import Plug.Conn
       import unquote(__MODULE__)
@@ -376,10 +377,26 @@ defmodule PhoenixParams do
         Enum.any?(errors) && {:error, errors} || {:ok, validated}
       end
 
+      case unquote(Keyword.get(opts, :input_key_type, :string)) do
+        :atom ->
+          def fetch_param(raw_params, name) when is_atom(name),
+            do: raw_params[name]
+
+          def fetch_param(raw_params, name) when is_bitstring(name),
+            do: raw_params[String.to_atom(name)]
+
+        :string ->
+          def fetch_param(raw_params, name),
+            do: raw_params[to_string(name)]
+
+        any ->
+          raise ":input_key_type expects :string or :atom, got: #{inspect(any)}"
+      end
+
       def extract(raw_params) do
         Enum.reduce(param_names(), %{}, fn name, extracted ->
           pdef = paramdefs()[name]
-          value = raw_params[to_string(name)]
+          value = fetch_param(raw_params, name)
           value = (is_nil(value) && pdef.default) || value
           Map.put(extracted, name, value)
         end)
@@ -484,7 +501,7 @@ defmodule PhoenixParams do
               conn
               |> put_status(400)
               |> halt
-              |> Phoenix.Controller.put_view(unquote(error_view))
+              |> Phoenix.Controller.put_view(unquote(opts[:error_view]))
               |> Phoenix.Controller.render("400.json", validation_failed: errors)
 
           {:ok, params} ->
@@ -531,6 +548,7 @@ defmodule PhoenixParams do
       end
 
       def coerce_decimal(v) when is_nil(v), do: v
+      def coerce_decimal(v) when is_integer(v), do: Decimal.new(v)
       def coerce_decimal(v) when is_float(v), do: Decimal.from_float(v)
       def coerce_decimal(v) when not is_bitstring(v), do: {:error, "not a float"}
 
