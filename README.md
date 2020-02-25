@@ -41,7 +41,9 @@ Detailed examples can be found in the [sample app](sample_app).
 * Define a [request](sample_app/lib/my_app_web/requests/user/create.ex):
 
 ```elixir
-  use PhoenixParams, error_view: MyAppWeb.ErrorView
+  use PhoenixParams,
+    error_view: MyAppWeb.ErrorView
+    input_key_type: :atom           # :atom | :string (default)
 
   param :email,
         type: String,
