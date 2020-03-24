@@ -397,7 +397,11 @@ defmodule PhoenixParams do
         Enum.reduce(param_names(), %{}, fn name, extracted ->
           pdef = paramdefs()[name]
           value = fetch_param(raw_params, name)
-          value = (is_nil(value) && pdef.default) || value
+          IO.inspect(pdef)
+          value =
+            if is_nil(value) and not is_nil(pdef.default),
+              do: pdef.default, else: value
+
           Map.put(extracted, name, value)
         end)
       end
