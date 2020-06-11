@@ -9,7 +9,9 @@ defmodule PhoenixParams do
         plug Api.Plugs.Requests.User.Index when action in [:index]
 
         def index(conn, params) do
-          # params is now a map with atom keys and transformed values
+          # params is now a map with transformed values
+          # when params names are declared as atoms in the request definition
+          # params will be a map with atom keys
           user = params.user
           # ...
         end
@@ -26,6 +28,7 @@ defmodule PhoenixParams do
         param :date,
               type: Date,
               required: true,
+              source: :body,
               validator: &__MODULE__.validate_date/1
 
         param :merchant_id,
@@ -34,7 +37,7 @@ defmodule PhoenixParams do
 
         param :email,
               type: [String],
-              validaator: &__MODULE__.validate_email/1
+              validator: &__MODULE__.validate_email/1
 
         global_validator &__MODULE__.ensure_mid_or_email/1
 
@@ -72,7 +75,19 @@ defmodule PhoenixParams do
         end
       end
 
-  Supported types are:
+  Synopsis:
+    param <name>, <options>
+  where:
+    * name - either an atom or binary
+    * options - a keyword list:
+      ** type - mandatory. See below for possible values.
+      ** required - optional. Either true or false (default).
+      ** nested - optional. Either true or false (default). More info on nested types below
+      ** validator - optional. A custom validator function in the form &Module.function/arity
+      ** source - optional. Currently has no effect and serves a purely declarational purpose.
+        Can be useful for exposing detailed endpoint information (eg. openapi)
+
+  Supported types of the param are:
     * `String`
     * `Integer`
     * `Decimal`
@@ -185,7 +200,8 @@ defmodule PhoenixParams do
 
   """
 
-  defmacro param(name, opts) when is_binary(name) or is_atom(name) or (is_list(name) and length(name) == 1) do
+  defmacro param(name, opts)
+           when is_binary(name) or is_atom(name) or (is_list(name) and length(name) == 1) do
     quote location: :keep, bind_quoted: [name: name, opts: opts] do
       {type, opts} = Keyword.pop(opts, :type)
 
@@ -461,10 +477,15 @@ defmodule PhoenixParams do
           Enum.filter(validated_params, fn param ->
             case param do
               # global validation failed
-              {nil, _} -> true
+              {nil, _} ->
+                true
+
               # param validation or coercion failed
-              {_, {:error, _}} -> true
-              _ -> false
+              {_, {:error, _}} ->
+                true
+
+              _ ->
+                false
             end
           end)
 
