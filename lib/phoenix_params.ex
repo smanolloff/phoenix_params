@@ -655,11 +655,11 @@ defmodule PhoenixParams do
       #
 
       def run_builtin_validation(:numericality, opts, %Decimal{} = value) do
-        with true <- !Map.has_key?(opts, :gt) || Decimal.compare(value, opts.gt) === Decimal.new(1) || "must be > #{opts.gt}",
-             true <- !Map.has_key?(opts, :gte) || Decimal.compare(value, opts.gte) !== Decimal.new(-1) || "must be >= #{opts.gte}",
-             true <- !Map.has_key?(opts, :lt) || Decimal.compare(value, opts.lt) === Decimal.new(-1) || "must be < #{opts.lt}",
-             true <- !Map.has_key?(opts, :lte) || Decimal.compare(value, opts.lte) !== Decimal.new(1) || "must be <= #{opts.lte}",
-             true <- !Map.has_key?(opts, :eq) || Decimal.compare(value, opts.eq) !== Decimal.new(0) || "must be == #{opts.eq}" do
+        with true <- !Map.has_key?(opts, :gt) || Decimal.compare(value, opts.gt) === :gt || "must be > #{opts.gt}",
+             true <- !Map.has_key?(opts, :gte) || Decimal.compare(value, opts.gte) !== :lt || "must be >= #{opts.gte}",
+             true <- !Map.has_key?(opts, :lt) || Decimal.compare(value, opts.lt) === :lt || "must be < #{opts.lt}",
+             true <- !Map.has_key?(opts, :lte) || Decimal.compare(value, opts.lte) !== :gt || "must be <= #{opts.lte}",
+             true <- !Map.has_key?(opts, :eq) || Decimal.compare(value, opts.eq) !== :eq || "must be == #{opts.eq}" do
           true
         else
           message -> {:error, message}
