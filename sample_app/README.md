@@ -12,6 +12,7 @@ Send a request:
 
 ```bash
 curl -H 'content-type: application/json' -X POST http://localhost:4000/api/users -d '{
+  "name": "johndoe",
   "email": "johndoe",
   "date_of_birth": "2012-01-01",
   "language": "Python",
@@ -28,8 +29,7 @@ curl -H 'content-type: application/json' -X POST http://localhost:4000/api/users
 Send another request:
 
 ```bash
-curl -H 'content-type: application/json' -X POST http://localhost:4000/api/users -d '{
-  "name": "John Doe",
+curl -H 'content-type: application/json' -X POST 'http://localhost:4000/api/users?name=john' -d '{
   "email": "johndoe@example.com",
   "date_of_birth": "2012-01-01",
   "language": "Python",
