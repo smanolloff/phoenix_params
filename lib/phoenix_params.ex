@@ -84,8 +84,8 @@ defmodule PhoenixParams do
       ** required - optional. Either true or false (default).
       ** nested - optional. Either true or false (default). More info on nested types below
       ** validator - optional. A custom validator function in the form &Module.function/arity
-      ** source - optional. Currently has no effect and serves a purely declarational purpose.
-        Can be useful for exposing detailed endpoint information (eg. openapi)
+      ** source - optional. Either :path, :body, :query or :auto (default)
+      ** default - optional. Default param value.
 
   Supported types of the param are:
     * `String`
@@ -206,10 +206,10 @@ defmodule PhoenixParams do
       {type, opts} = Keyword.pop(opts, :type)
 
       {validator, opts} = Keyword.pop(opts, :validator)
-      {required, opts} = Keyword.pop(opts, :required)
+      {required, opts} = Keyword.pop(opts, :required, false)
       {default, opts} = Keyword.pop(opts, :default)
-      {nested, opts} = Keyword.pop(opts, :nested)
-      {source, opts} = Keyword.pop(opts, :source)
+      {nested, opts} = Keyword.pop(opts, :nested, false)
+      {source, opts} = Keyword.pop(opts, :source, :auto)
       builtin_validators = opts
 
 
@@ -360,16 +360,20 @@ defmodule PhoenixParams do
 
       def init(default), do: default
 
-      def validate(params) when not is_map(params), do: {:error, "invalid"}
+      def validate(params) when not is_map(params),
+        do: {:error, "invalid"}
 
-      def validate(params) do
+      def validate(params),
+        do: validate(params, {nil, nil, nil})
+
+      def validate(params, {pparams, bparams, qparams}) do
         params
-        |> extract
-        |> run_coercions
-        |> run_validations
-        |> conclude
-        |> maybe_run_global_validations
-        |> conclude
+        |> extract({pparams, bparams, qparams})
+        |> run_coercions()
+        |> run_validations()
+        |> conclude()
+        |> maybe_run_global_validations()
+        |> conclude()
       end
 
       def validate_array(list) when not is_list(list), do: {:error, "invalid"}
@@ -409,10 +413,18 @@ defmodule PhoenixParams do
           raise ":input_key_type expects :string or :atom, got: #{inspect(any)}"
       end
 
-      def extract(raw_params) do
+      def extract(params, {pparams, bparams, qparams}) do
         Enum.reduce(param_names(), %{}, fn name, extracted ->
           pdef = paramdefs()[name]
-          value = fetch_param(raw_params, name)
+          input_params =
+            case pdef.source do
+              :auto -> params
+              :path -> pparams
+              :body -> bparams
+              :query -> qparams
+            end
+
+          value = fetch_param(input_params, name)
           value =
             if is_nil(value) and not is_nil(pdef.default),
               do: pdef.default, else: value
@@ -516,7 +528,7 @@ defmodule PhoenixParams do
       end
 
       def call(conn, _) do
-        case validate(conn.params) do
+        case validate(conn.params, {conn.path_params, conn.body_params, conn.query_params}) do
           {:error, errors} ->
             errors = Enum.reduce(errors, [], &validation_error(&1, &2))
             errors = (length(errors) > 1 && errors) || List.first(errors)

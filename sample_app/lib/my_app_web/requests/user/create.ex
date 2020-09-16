@@ -4,6 +4,7 @@ defmodule MyAppWeb.Requests.User.Create do
   param :name,
         type: String,
         required: true,
+        source: :query,
         length: %{gt: 0, lt: 100}
 
   param :email,
