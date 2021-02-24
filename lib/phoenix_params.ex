@@ -394,7 +394,7 @@ defmodule PhoenixParams do
               end
             end)
 
-        Enum.any?(errors) && {:error, errors} || {:ok, validated}
+        Enum.any?(errors) && {:error, errors} || {:ok, Enum.reverse(validated)}
       end
 
       case unquote(Keyword.get(opts, :input_key_type, :string)) do
