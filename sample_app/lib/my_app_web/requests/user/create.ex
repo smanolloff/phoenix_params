@@ -13,7 +13,7 @@ defmodule MyAppWeb.Requests.User.Create do
 
   param :date_of_birth,
         type: Date,
-        required: true,
+        default: &__MODULE__.today/1,
         validator: &__MODULE__.validate_dob/1
 
   param :language,
@@ -23,7 +23,7 @@ defmodule MyAppWeb.Requests.User.Create do
 
   param :years_of_experience,
         type: Integer,
-        required: true,
+        default: &__MODULE__.gen_years/1,
         numericality: %{gte: 0, lt: 50}
 
   param :hobbies,
@@ -38,11 +38,19 @@ defmodule MyAppWeb.Requests.User.Create do
   global_validator &__MODULE__.validate_age_and_exp/1
 
   #
+  # Default value generators
+  #
+
+  def gen_years(_params) do
+    :rand.uniform(10)
+  end
+
+  #
   # Validators
   #
 
   def validate_dob(date) do
-    date < Date.utc_today || {:error, "can't be in the future"}
+    date <= Date.utc_today || {:error, "can't be in the future"}
   end
 
   def validate_hobbies(list), do: validate_each(list, &validate_hobby/1)
@@ -54,5 +62,9 @@ defmodule MyAppWeb.Requests.User.Create do
   def validate_age_and_exp(params) do
     age = Date.utc_today.year - params.date_of_birth.year
     age > params.years_of_experience || {:error, "can't be *that* experienced"}
+  end
+
+  def today(_params) do
+    Date.utc_today() |> Date.to_iso8601()
   end
 end

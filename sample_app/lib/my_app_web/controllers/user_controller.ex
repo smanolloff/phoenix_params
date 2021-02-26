@@ -5,6 +5,6 @@ defmodule MyAppWeb.UserController do
 
   def create(conn, params) do
     IO.inspect(params)
-    json(conn, %{result: "ok"})
+    json(conn, %{result: "ok", params: params})
   end
 end
