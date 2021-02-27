@@ -349,8 +349,11 @@ defmodule PhoenixParams do
         any -> raise ":input_key_type expects :string or :atom, got: #{inspect(any)}"
       end
 
-      def validate_each(list, validator),
-        do: Util.validate_each(list, validator)
+      def validate_each(a, b),
+        do: Util.validate_each(a, b)
+
+      def run_builtin_validation(a, b, c),
+        do: Util.run_builtin_validation(a, b, c)
 
       def init(default),
         do: default
