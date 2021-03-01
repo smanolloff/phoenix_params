@@ -349,6 +349,9 @@ defmodule PhoenixParams do
         any -> raise ":input_key_type expects :string or :atom, got: #{inspect(any)}"
       end
 
+      def paramdefs,
+        do: Map.new(phoenix_params_meta().paramdefs)
+
       def validate_each(a, b),
         do: Util.validate_each(a, b)
 
@@ -381,6 +384,10 @@ defmodule PhoenixParams do
 
       def validate_array(list),
         do: Util.validate_array(list, @meta)
+
+      def phoenix_params_meta,
+        do: @meta
+
     end
   end
 end

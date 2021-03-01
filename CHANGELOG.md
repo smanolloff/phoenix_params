@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v1.2.1 (2021-02-27)
+
+* expose run_builtin_validation/3 
+
 ## v1.2.0 (2021-02-26)
 
 * add support for functions as default values
