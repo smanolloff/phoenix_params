@@ -38,7 +38,8 @@ defmodule PhoenixParams.Util do
 
   def extract(params, {pparams, bparams, qparams}, meta) do
     for name <- meta.param_names, into: %{} do
-      pdef = meta.paramdefs[name]
+      pdef = find_paramdef(meta, name)
+
       input_params =
         case pdef.source do
           :auto -> params
@@ -72,7 +73,7 @@ defmodule PhoenixParams.Util do
 
   def run_coercions(params, meta) do
     Enum.reduce(params, params, fn {name, value}, coerced ->
-      pdef = meta.paramdefs[name]
+      pdef = find_paramdef(meta, name)
 
       case value do
         nil ->
@@ -91,7 +92,7 @@ defmodule PhoenixParams.Util do
 
   def run_validations(coerced_params, meta) do
     Enum.reduce(coerced_params, coerced_params, fn {name, value}, validated ->
-      pdef = meta.paramdefs[name]
+      pdef = find_paramdef(meta, name)
 
       cond do
         is_nil(pdef.validator) ->
@@ -196,6 +197,13 @@ defmodule PhoenixParams.Util do
 
   def coercion_error?(_, {:error, _}), do: true
   def coercion_error?(_), do: false
+
+  def find_paramdef(%{paramdefs: paramdefs}, name) do
+    Enum.find_value(paramdefs, fn
+      {^name, v} -> v
+      _ -> nil
+    end)
+  end
 
 
   def fetch_param(:atom, raw_params, name) when is_atom(name),
