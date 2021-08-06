@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v1.2.3 (2021-08-06)
+
+* fix an error when a string is given to `param`
+
 ## v1.2.2 (2021-03-01)
 
 * expose `paramdefs/0` and `phoenix_params_meta/0`
